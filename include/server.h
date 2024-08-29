@@ -10,9 +10,14 @@ enum Turn {
 };
 
 typedef struct {
-    int board[3][3];
-    fd_t player1;
-    fd_t player2;
+    fd_t socket;
+    char character;
+} Player;
+
+typedef struct {
+    Board board;
+    Player player1;
+    Player player2;
     enum Turn turn;
     int is_active;
 } Game;

@@ -8,10 +8,14 @@ include_directories(include)
 add_executable(server src/server.c
         src/protocol.c
         include/protocol.h
-        include/server.h)
+        include/server.h
+        src/utils.c
+        include/utils.h)
 add_executable(game src/client.c
         src/protocol.c
         include/protocol.h
-        include/client.h)
+        include/client.h
+        src/utils.c
+        include/utils.h)
 
 target_link_libraries(server pthread)

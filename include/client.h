@@ -1,7 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-typedef enum { PLAYER_VS_PLAYER = '1', PLAYER_VS_COMPUTER = '2' } GameMode;
+typedef enum { PLAYER_VS_COMPUTER = '1', PLAYER_VS_PLAYER = '2' } GameMode;
 
 void play_player_vs_player();
 
