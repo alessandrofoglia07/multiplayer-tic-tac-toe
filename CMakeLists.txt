@@ -5,6 +5,8 @@ set(CMAKE_C_STANDARD 11)
 
 include_directories(include)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
+
 add_executable(server src/server.c
         src/protocol.c
         include/protocol.h
