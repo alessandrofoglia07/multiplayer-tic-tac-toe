@@ -27,7 +27,7 @@ int check_winner(const Board board) {
     if (board[6] == board[7] && board[7] == board[8] && board[6] != EMPTY) {
         return board[6];
     }
-    return -1;
+    return EMPTY;
 }
 
 int is_board_full(const Board board) {

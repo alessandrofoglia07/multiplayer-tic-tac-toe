@@ -3,6 +3,7 @@
 #include "protocol.h"
 
 #define MAX_GAMES 100
+#define MAX_CONNECTION_QUEUE 10
 
 enum Turn {
     Player1 = 1,
@@ -21,5 +22,15 @@ typedef struct {
     enum Turn turn;
     int is_active;
 } Game;
+
+int create_session(fd_t player1_fd);
+
+void join_sessioin(int session_id, fd_t player2_fd);
+
+void process_move(int session_id, fd_t player_fd, int position);
+
+void end_session(int session_id);
+
+void handle_client(void *arg);
 
 #endif //SERVER_H
