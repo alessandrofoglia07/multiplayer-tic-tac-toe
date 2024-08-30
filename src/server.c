@@ -11,7 +11,6 @@ Game *sessions[MAX_GAMES];
 pthread_mutex_t sessions_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int main() {
-    return 0;
     const fd_t server_fd = socket(AF_INET, SOCK_STREAM, 0); // use IPv4 and TCP
     if (server_fd == -1) {
         perror("socket");
@@ -47,14 +46,66 @@ int main() {
 }
 
 int create_session(const fd_t player1_fd) {
-}
-void join_sessioin(const int session_id, const fd_t player2_fd) {
+    pthread_mutex_lock(&sessions_mutex);
+    for (int i = 0; i < MAX_GAMES; i++) {
+        if (sessions[i] == NULL) {
+            sessions[i] = (Game *) malloc(sizeof(Game));
+            sessions[i] = {0};
+            sessions[i]->player1.socket = player1_fd;
+            sessions[i]->player1.character = 'X';
+            sessions[i]->turn = Player1; // Player 1 starts
+            sessions[i]->is_active = 1;
+            const Board EMPTY_BOARD = {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY};
+            memcpy(sessions[i]->board, EMPTY_BOARD, sizeof(sessions[i]->board));
+            pthread_mutex_unlock(&sessions_mutex);
+            return i; // return session id
+        }
+    }
+    pthread_mutex_unlock(&sessions_mutex);
+    return -1; // no available slot for new session
 }
 
-void process_move(int session_id, fd_t player_fd, int position) {
+void join_session(const int session_id, const fd_t player2_fd) {
+    pthread_mutex_lock(&sessions_mutex);
+    sessions[session_id]->player2.socket = player2_fd;
+    sessions[session_id]->player2.character = 'O';
+    pthread_mutex_unlock(&sessions_mutex);
 }
 
-void end_session(int session_id) {
+void process_move(const int session_id, const fd_t player_fd, const int position) {
+    pthread_mutex_lock(&sessions_mutex);
+    Game *session = sessions[session_id];
+
+    if (session->is_active && session->board[position] == EMPTY &&
+        ((session->turn == Player1 && player_fd == session->player1.socket) ||
+         (session->turn == Player2 && player_fd == session->player2.socket))) {
+        session->board[position] = session->turn == Player1 ? session->player1.character : session->player2.character;
+
+        // check if the game is over
+        const char winner = check_winner(session->board);
+        if (winner != EMPTY || is_board_full(session->board)) {
+            session->is_active = 0;
+        } else {
+            // switch turns
+            session->turn = session->turn == Player1 ? Player2 : Player1;
+        }
+
+        // send updated state to both players
+        Message msg;
+        strcpy(msg.type, MSG_STATE_UPDATE);
+        memcpy(msg.board, session->board, sizeof(msg.board));
+        send_message(session->player1.socket, &msg);
+        send_message(session->player2.socket, &msg);
+    }
+
+    pthread_mutex_unlock(&sessions_mutex);
+}
+
+void end_session(const int session_id) {
+    pthread_mutex_lock(&sessions_mutex);
+    free(sessions[session_id]);
+    sessions[session_id] = NULL;
+    pthread_mutex_unlock(&sessions_mutex);
 }
 
 void handle_client(void *arg) {
