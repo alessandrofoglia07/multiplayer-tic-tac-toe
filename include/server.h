@@ -27,10 +27,10 @@ int create_session(fd_t player1_fd);
 
 void join_session(int session_id, fd_t player2_fd);
 
-void process_move(const int session_id, const fd_t player_fd, const int position);
+void process_move(int session_id, fd_t player_fd, int position);
 
 void end_session(int session_id);
 
-void handle_client(void *arg);
+void *handle_client(void *arg);
 
 #endif //SERVER_H

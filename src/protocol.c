@@ -15,8 +15,7 @@ int receive_message(const fd_t fd, Message *message) {
     char buf[sizeof(Message)];
     const int bytes_received = recv(fd, buf, sizeof(Message), 0);
     if (bytes_received == sizeof(Message)) {
-        memcpy(message, buf, sizeof(Message));
-        return 1;
+        memcpy(message, buf, sizeof(Message));;
     }
-    return 0;
+    return bytes_received;
 }
