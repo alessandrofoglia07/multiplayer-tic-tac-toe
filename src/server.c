@@ -49,14 +49,27 @@ int main() {
         }
 
         fd_t *player_fd_ptr = (fd_t *) malloc(sizeof(fd_t));
+        if (player_fd_ptr == NULL) {
+            perror("malloc");
+            close(player_fd);
+            continue;
+        }
+        *player_fd_ptr = player_fd;
 
         pthread_t client_thread;
         const int err = pthread_create(&client_thread, NULL, handle_client, player_fd_ptr);
         if (err != 0) {
             perror("pthread_create");
+            close(player_fd);
+            free(player_fd_ptr);
             return 1;
         }
+
+        pthread_detach(client_thread);
     }
+
+    close(server_fd);
+    return 0;
 }
 
 int create_session(const fd_t player1_fd) {
@@ -64,6 +77,11 @@ int create_session(const fd_t player1_fd) {
     for (int i = 0; i < MAX_GAMES; i++) {
         if (sessions[i] == NULL) {
             sessions[i] = (Game *) malloc(sizeof(Game));
+            if (sessions[i] == NULL) {
+                perror("malloc");
+                pthread_mutex_unlock(&sessions_mutex);
+                return -1;
+            }
             memcpy(sessions[i], &(Game){0}, sizeof(Game));
             sessions[i]->player1.socket = player1_fd;
             sessions[i]->player1.character = 'X';
@@ -137,6 +155,8 @@ void end_session(const int session_id) {
 
 void *handle_client(void *arg) {
     const fd_t player_fd = *(fd_t *) arg;
+    free(arg); // Free the malloc'd memory for player_fd_ptr
+
     int session_id = -1;
 
     // check if there's an available session or create a new one
@@ -178,6 +198,5 @@ void *handle_client(void *arg) {
     end_session(session_id);
 
     close(player_fd);
-    free(arg);
     pthread_exit(NULL);
 }

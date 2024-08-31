@@ -8,15 +8,15 @@ include_directories(include)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 
 add_executable(server src/server.c
+        include/server.h
         src/protocol.c
         include/protocol.h
-        include/server.h
         src/utils.c
         include/utils.h)
 add_executable(game src/client.c
+        include/client.h
         src/protocol.c
         include/protocol.h
-        include/client.h
         src/utils.c
         include/utils.h)
 
