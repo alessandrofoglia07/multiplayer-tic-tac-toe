@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-Game *sessions[MAX_GAMES];
+Game *sessions[MAX_GAMES] = {NULL};
 pthread_mutex_t sessions_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int main() {
@@ -67,9 +67,6 @@ int main() {
 
         pthread_detach(client_thread);
     }
-
-    close(server_fd);
-    return 0;
 }
 
 int create_session(const fd_t player1_fd) {
@@ -159,19 +156,20 @@ void *handle_client(void *arg) {
 
     int session_id = -1;
 
-    // check if there's an available session or create a new one
-    pthread_mutex_lock(&sessions_mutex);
+    // Look for an available session to join
     for (int i = 0; i < MAX_GAMES; i++) {
         if (sessions[i] != NULL && sessions[i]->player2.socket == 0) {
-            join_session(i, player_fd); // join existing session
             session_id = i;
             break;
         }
     }
+
+    // If no available session, create a new one
     if (session_id == -1) {
-        session_id = create_session(player_fd); // create new session
+        session_id = create_session(player_fd);
+    } else {
+        join_session(session_id, player_fd);
     }
-    pthread_mutex_unlock(&sessions_mutex);
 
     if (session_id == -1) {
         close(player_fd);
