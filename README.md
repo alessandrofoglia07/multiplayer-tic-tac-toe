@@ -59,6 +59,8 @@ $ cmake --build ./cmake-build-debug --target game -- -j 6
 $ ./build/game
 ```
 
+<img src="https://cloud-6xnhgyfib-hack-club-bot.vercel.app/0image.png"></img>
+
 ## License
 
 MIT

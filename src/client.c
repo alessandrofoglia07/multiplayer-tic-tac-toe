@@ -144,6 +144,7 @@ void play_player_vs_computer() {
     printf("The game has started\n");
 
     while (1) {
+        system("clear");
         print_board(board);
 
         // Player's turn
