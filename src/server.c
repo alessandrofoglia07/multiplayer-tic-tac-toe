@@ -133,9 +133,6 @@ void process_move(const int session_id, const fd_t player_fd, const int position
             session->turn = session->turn == Player1 ? Player2 : Player1;
         }
 
-        printf("%d %d %d %d", session->player1.socket, session->player2.socket, player_fd,
-               session->player1.socket == player_fd ? session->player2.socket : session->player1.socket);
-        fflush(stdout);
         // send updated board to the other player
         Message msg;
         strcpy(msg.type, MSG_STATE_UPDATE);
