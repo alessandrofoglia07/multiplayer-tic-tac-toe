@@ -103,6 +103,9 @@ void join_session(const int session_id, const fd_t player2_fd) {
     strcpy(msg.type, MSG_GAME_START);
     memcpy(msg.board, sessions[session_id]->board, sizeof(msg.board));
     msg.character = sessions[session_id]->player1.character;
+    msg.turn = sessions[session_id]->turn == Player1
+                   ? sessions[session_id]->player1.character
+                   : sessions[session_id]->player2.character;
     send_message(sessions[session_id]->player2.socket, &msg);
     msg.character = sessions[session_id]->player2.character;
     send_message(sessions[session_id]->player1.socket, &msg);
@@ -113,9 +116,7 @@ void process_move(const int session_id, const fd_t player_fd, const int position
     pthread_mutex_lock(&sessions_mutex);
     Game *session = sessions[session_id];
 
-    if (session->is_active && session->board[position] == EMPTY &&
-        ((session->turn == Player1 && player_fd == session->player1.socket) ||
-         (session->turn == Player2 && player_fd == session->player2.socket))) {
+    if (session->is_active && session->board[position] == EMPTY) {
         session->board[position] = session->turn == Player1 ? session->player1.character : session->player2.character;
 
         // check if the game is over
@@ -132,12 +133,14 @@ void process_move(const int session_id, const fd_t player_fd, const int position
             session->turn = session->turn == Player1 ? Player2 : Player1;
         }
 
-        // send updated state to both players
+        printf("%d %d %d %d", session->player1.socket, session->player2.socket, player_fd,
+               session->player1.socket == player_fd ? session->player2.socket : session->player1.socket);
+        fflush(stdout);
+        // send updated board to the other player
         Message msg;
         strcpy(msg.type, MSG_STATE_UPDATE);
         memcpy(msg.board, session->board, sizeof(msg.board));
-        send_message(session->player1.socket, &msg);
-        send_message(session->player2.socket, &msg);
+        send_message(session->player1.socket == player_fd ? session->player2.socket : session->player1.socket, &msg);
     }
 
     pthread_mutex_unlock(&sessions_mutex);
@@ -179,8 +182,7 @@ void *handle_client(void *arg) {
     while (sessions[session_id]->is_active) {
         Message msg;
         // wait for player's move
-        const int read_size = receive_message(player_fd, &msg);
-        if (read_size > 0 && strcmp(msg.type, MSG_MOVE) == 0) {
+        if (receive_message(player_fd, &msg) > 0 && strcmp(msg.type, MSG_MOVE) == 0) {
             // parse move
             for (int i = 0; i < 9; i++) {
                 if (sessions[session_id]->board[i] != msg.board[i]) {

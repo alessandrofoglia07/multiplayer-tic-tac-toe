@@ -2,7 +2,7 @@
 #define SERVER_H
 #include "protocol.h"
 
-#define MAX_GAMES 100
+#define MAX_GAMES 10
 #define MAX_CONNECTION_QUEUE 10
 
 enum Turn {

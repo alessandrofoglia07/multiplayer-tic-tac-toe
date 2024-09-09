@@ -36,6 +36,29 @@ int main() {
     return 0;
 }
 
+void play_turn(Board board, const char player, const fd_t sockfd) {
+    Message msg;
+    system("clear");
+    print_board(board);
+    while (1) {
+        // player's turn
+        printf("Enter the position you want to play (1-9): ");
+        const char position = getchar();
+        getchar(); // Consume the newline character
+        if (atoi(&position) >= 1 && atoi(&position) <= 9) {
+            if (board[atoi(&position) - 1] == EMPTY) {
+                // send the move to the server
+                board[atoi(&position) - 1] = player;
+                strcpy(msg.type, MSG_MOVE);
+                memcpy(msg.board, board, sizeof(Board));
+                send_message(sockfd, &msg);
+                break;
+            }
+            printf("Invalid position selected\n");
+        }
+    }
+}
+
 void play_player_vs_player() {
     char player;
     Board board = {EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY};
@@ -73,7 +96,14 @@ void play_player_vs_player() {
         exit(1);
     }
 
+    if (player == msg.turn) {
+        play_turn(board, player, sockfd);
+    }
+
     while (1) {
+        print_board(board);
+        printf("Waiting for other player to make a move...\n");
+
         // wait for "STATE_UPDATE" or "GAME_OVER" message
         if (receive_message(sockfd, &msg) == -1) {
             printf("Failed to receive message from the server\n");
@@ -94,29 +124,12 @@ void play_player_vs_player() {
         if (strcmp(msg.type, MSG_STATE_UPDATE) == 0) {
             // update the board and print it
             memcpy(board, msg.board, sizeof(Board));
-            print_board(board);
         } else {
             printf("Server sent an invalid message\n");
             exit(1);
         }
 
-        while (1) {
-            // player's turn
-            printf("Enter the position you want to play (1-9): ");
-            const char position = getchar();
-            getchar(); // Consume the newline character
-            if (atoi(&position) >= 1 && atoi(&position) <= 9) {
-                if (board[atoi(&position) - 1] == EMPTY) {
-                    // send the move to the server
-                    board[atoi(&position) - 1] = player;
-                    strcpy(msg.type, MSG_MOVE);
-                    memcpy(msg.board, board, sizeof(Board));
-                    send_message(sockfd, &msg);
-                    break;
-                }
-                printf("Invalid position selected\n");
-            }
-        }
+        play_turn(board, player, sockfd);
     }
 }
 

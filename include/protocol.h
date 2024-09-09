@@ -23,10 +23,11 @@ typedef struct {
     char type[13];
     Board board;
     char character; // 'X' or 'O'
+    char turn; // 'X' or 'O'
 } Message;
 
-int send_message(const fd_t fd, const Message *message);
+int send_message(fd_t fd, const Message *message);
 
-int receive_message(const fd_t fd, Message *message);
+int receive_message(fd_t fd, Message *message);
 
 #endif //PROTOCOL_H
